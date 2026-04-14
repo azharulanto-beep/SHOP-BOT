@@ -2,32 +2,28 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import os
 
-# ================= CONFIG =================
 TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 
 bot = telebot.TeleBot(TOKEN)
 
-# 🖼️ LOGO (working direct image link)
+# 🖼️ LOGO
 LOGO = "https://i.postimg.cc/ZnTLxtW2/logo.jpg"
 
-# ================= PRODUCTS =================
+# ================= 10 SLOT PRODUCTS =================
 products = {
-    "1": {
-        "name": "VIP Key",
-        "price": "100৳",
-        "keys": ["KEY123", "KEY456", "KEY789"],
-        "link": "https://example.com/download"
-    },
-    "2": {
-        "name": "Premium Access",
-        "price": "200৳",
-        "keys": ["PREM111", "PREM222"],
-        "link": "https://example.com/download2"
-    }
+    "1": {"DRIP CLINT": "", "7 DAYS 400\n10 DAYS\n30 DAYS 1500": "0", "bkash": "", "keys": [], "link": ""},
+    "2": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "3": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "4": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "5": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "6": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "7": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "8": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "9": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""},
+    "10": {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""}
 }
 
-# pending orders
 pending = {}
 
 # ================= START =================
@@ -36,21 +32,16 @@ def start(msg):
     markup = InlineKeyboardMarkup(row_width=1)
 
     for pid, p in products.items():
-        markup.add(InlineKeyboardButton(
-            f"{p['name']} - {p['price']} | Stock: {len(p['keys'])}",
-            callback_data=f"buy_{pid}"
-        ))
-
-    markup.add(
-        InlineKeyboardButton("📞 Owner", callback_data="owner"),
-        InlineKeyboardButton("📢 Channels", callback_data="channels"),
-        InlineKeyboardButton("❓ Help", callback_data="help")
-    )
+        if p["name"] != "Empty":
+            markup.add(InlineKeyboardButton(
+                f"{p['name']} - {p['price']} | Stock:{len(p['keys'])}",
+                callback_data=f"buy_{pid}"
+            ))
 
     bot.send_photo(
         msg.chat.id,
         LOGO,
-        caption="🔥 WELCOME TO PREMIUM SHOP BOT\nSelect your product below:",
+        caption="🔥 WELCOME TO ANTO SHOP\nSelect product below:",
         reply_markup=markup
     )
 
@@ -58,22 +49,20 @@ def start(msg):
 @bot.callback_query_handler(func=lambda c: c.data.startswith("buy_"))
 def buy(call):
     pid = call.data.split("_")[1]
+    p = products[pid]
 
-    pending[call.message.chat.id] = {
-        "pid": pid,
-        "trx": None
-    }
+    pending[call.message.chat.id] = {"pid": pid}
 
     bot.send_message(
         call.message.chat.id,
-        "💰 PAYMENT INSTRUCTION\n\n"
-        "👉 Send bKash payment\n"
-        "👉 Then send TRX ID\n"
-        "👉 Then send screenshot\n\n"
-        "⚠️ TRX + Screenshot required!"
+        f"💰 PAYMENT PAGE\n\n"
+        f"📦 Product: {p['name']}\n"
+        f"💵 Price: {p['price']}\n"
+        f"📱 bKash: {p['01918591988']}\n\n"
+        "👉 Pay first\n👉 Send TRX\n👉 Send Screenshot"
     )
 
-# ================= PAYMENT VERIFY =================
+# ================= VERIFY =================
 @bot.message_handler(content_types=['text', 'photo'])
 def verify(msg):
     if msg.chat.id not in pending:
@@ -82,37 +71,29 @@ def verify(msg):
     data = pending[msg.chat.id]
     pid = data["pid"]
 
-    # STEP 1: TRX ID
     if msg.content_type == "text":
         data["trx"] = msg.text
         pending[msg.chat.id] = data
-        bot.reply_to(msg, "📸 এখন Payment Screenshot পাঠাও")
+        bot.reply_to(msg, "📸 এখন Screenshot পাঠাও")
         return
 
-    # STEP 2: SCREENSHOT -> SEND ADMIN
     if msg.content_type == "photo":
-        trx = data.get("trx", "NOT PROVIDED")
-
-        markup = InlineKeyboardMarkup()
-        markup.add(
-            InlineKeyboardButton("✅ Approve", callback_data=f"approve_{msg.chat.id}_{pid}"),
-            InlineKeyboardButton("❌ Reject", callback_data=f"reject_{msg.chat.id}")
-        )
-
         bot.send_photo(
             ADMIN_ID,
             msg.photo[-1].file_id,
             caption=(
-                "🆕 NEW PAYMENT REQUEST\n\n"
-                f"👤 User: {msg.chat.id}\n"
-                f"🧾 TRX: {trx}\n"
-                f"📦 Product ID: {pid}\n\n"
-                "⚠️ Verify carefully!"
+                "🆕 ORDER\n\n"
+                f"User: {msg.chat.id}\n"
+                f"Product: {products[pid]['name']}\n"
+                f"TRX: {data.get('trx')}"
             ),
-            reply_markup=markup
+            reply_markup=InlineKeyboardMarkup().add(
+                InlineKeyboardButton("✅ Approve", callback_data=f"approve_{msg.chat.id}_{pid}"),
+                InlineKeyboardButton("❌ Reject", callback_data=f"reject_{msg.chat.id}")
+            )
         )
 
-        bot.send_message(msg.chat.id, "⏳ Payment sent to admin")
+        bot.send_message(msg.chat.id, "⏳ Sent to admin")
         del pending[msg.chat.id]
 
 # ================= APPROVE =================
@@ -127,24 +108,17 @@ def approve(call):
     product = products[pid]
 
     if len(product["keys"]) == 0:
-        bot.send_message(ADMIN_ID, "❌ No stock left!")
+        bot.send_message(ADMIN_ID, "❌ No stock!")
         return
 
     key = product["keys"].pop(0)
 
     bot.send_message(
         uid,
-        "✅ PAYMENT APPROVED\n\n"
-        f"🔑 YOUR KEY: {key}\n"
-        f"📥 DOWNLOAD: {product['link']}\n\n"
-        "🎉 Thanks for purchase!"
+        f"✅ APPROVED\n\n🔑 KEY: {key}\n📥 LINK: {product['link']}"
     )
 
-    bot.edit_message_caption(
-        "✅ APPROVED & DELIVERED",
-        call.message.chat.id,
-        call.message.message_id
-    )
+    bot.edit_message_caption("APPROVED", call.message.chat.id, call.message.message_id)
 
 # ================= REJECT =================
 @bot.callback_query_handler(func=lambda c: c.data.startswith("reject_"))
@@ -153,46 +127,47 @@ def reject(call):
         return
 
     uid = int(call.data.split("_")[1])
+    bot.send_message(uid, "❌ Rejected")
 
-    bot.send_message(uid, "❌ Payment rejected. Try again.")
+    bot.edit_message_caption("REJECTED", call.message.chat.id, call.message.message_id)
 
-    bot.edit_message_caption(
-        "❌ REJECTED",
-        call.message.chat.id,
-        call.message.message_id
-    )
-
-# ================= HELP =================
-@bot.callback_query_handler(func=lambda c: c.data == "help")
-def help_menu(call):
-    bot.send_message(call.message.chat.id,
-        "📌 HELP MENU\n\n"
-        "/start - Open shop\n"
-        "/stock - Check stock\n"
-        "/addkey - Add keys (admin)\n"
-    )
-
-# ================= OWNER =================
-@bot.callback_query_handler(func=lambda c: c.data == "owner")
-def owner(call):
-    bot.send_message(call.message.chat.id, "👤 Owner: @yourusername")
-
-# ================= CHANNELS =================
-@bot.callback_query_handler(func=lambda c: c.data == "channels")
-def channels(call):
-    bot.send_message(call.message.chat.id, "📢 @channel1\n@channel2")
-
-# ================= STOCK =================
-@bot.message_handler(commands=['stock'])
-def stock(msg):
+# ================= OWNER PANEL =================
+@bot.message_handler(commands=['owner'])
+def owner(msg):
     if msg.chat.id != ADMIN_ID:
         return
 
-    text = "📦 STOCK REPORT\n\n"
-    for pid, p in products.items():
-        text += f"{p['name']} → {len(p['keys'])} keys\n"
+    bot.send_message(
+        msg.chat.id,
+        "👑 OWNER PANEL\n\n"
+        "/add slot|name|price|bkash|link\n"
+        "/addkey slot|KEY\n"
+        "/remove slot\n"
+        "/show"
+    )
 
-    bot.send_message(msg.chat.id, text)
+# ================= ADD PRODUCT =================
+@bot.message_handler(commands=['add'])
+def add(msg):
+    if msg.chat.id != ADMIN_ID:
+        return
+
+    try:
+        _, data = msg.text.split(" ", 1)
+        slot, name, price, bkash, link = data.split("|")
+
+        products[slot] = {
+            "name": name,
+            "price": price,
+            "bkash": bkash,
+            "link": link,
+            "keys": []
+        }
+
+        bot.reply_to(msg, f"✅ Added Slot {slot}")
+
+    except:
+        bot.reply_to(msg, "❌ /add slot|name|price|bkash|link")
 
 # ================= ADD KEY =================
 @bot.message_handler(commands=['addkey'])
@@ -201,12 +176,41 @@ def addkey(msg):
         return
 
     try:
-        _, pid, key = msg.text.split()
-        products[pid]["keys"].append(key)
+        _, data = msg.text.split(" ", 1)
+        slot, key = data.split("|")
+
+        products[slot]["keys"].append(key)
+
         bot.reply_to(msg, "✅ Key Added")
+
     except:
-        bot.reply_to(msg, "❌ Use: /addkey 1 KEY123")
+        bot.reply_to(msg, "❌ /addkey slot|KEY")
+
+# ================= REMOVE =================
+@bot.message_handler(commands=['remove'])
+def remove(msg):
+    if msg.chat.id != ADMIN_ID:
+        return
+
+    try:
+        _, slot = msg.text.split()
+        products[slot] = {"name": "Empty", "price": "0", "bkash": "", "keys": [], "link": ""}
+        bot.reply_to(msg, "🗑️ Removed")
+    except:
+        bot.reply_to(msg, "❌ /remove 1")
+
+# ================= SHOW =================
+@bot.message_handler(commands=['show'])
+def show(msg):
+    if msg.chat.id != ADMIN_ID:
+        return
+
+    text = "📦 PRODUCTS\n\n"
+    for k, v in products.items():
+        text += f"{k}. {v['name']} | Keys: {len(v['keys'])}\n"
+
+    bot.send_message(msg.chat.id, text)
 
 # ================= RUN =================
-print("🔥 Bot Running...")
+print("🔥 BOT RUNNING...")
 bot.infinity_polling()
