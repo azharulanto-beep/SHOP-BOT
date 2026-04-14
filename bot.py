@@ -62,7 +62,7 @@ def buy(call):
         f"💰 PAYMENT PAGE\n\n"
         f"📦 Product: {p.get('name')}\n"
         f"💵 Price: {p.get('price')}\n"
-        f"📱 bKash: {p.get('01918591988')}\n\n"
+        f"📱 bKash: {p.get('bKash')}\n\n"
         f"👉 Pay first\n👉 Send TRX\n👉 Send Screenshot"
     )
 
