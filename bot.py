@@ -3,7 +3,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import os
 
 TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
+ADMIN_ID = int(os.environ.get("ADMIN_ID", "8488177092"))
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -47,7 +47,7 @@ def buy(call):
     pending[call.message.chat.id] = pid
 
     bot.send_message(call.message.chat.id,
-        "💰 Send payment to bKash: 01XXXXXXXXX\n\nSend TRX ID after payment."
+        "💰 Send payment to bKash: 01918591988\n\nSend TRX ID after payment."
     )
 
 # 📩 TRX Handle
@@ -104,12 +104,12 @@ def reject(call):
 # 📞 Owner
 @bot.callback_query_handler(func=lambda call: call.data == "owner")
 def owner(call):
-    bot.send_message(call.message.chat.id, "👤 Contact Owner: @yourusername")
+    bot.send_message(call.message.chat.id, "👤 Contact Owner: @PAPAJI_ANTO")
 
 # 📢 Channels
 @bot.callback_query_handler(func=lambda call: call.data == "channels")
 def channels(call):
-    bot.send_message(call.message.chat.id, "📢 Join Channels:\n@channel1\n@channel2")
+    bot.send_message(call.message.chat.id, "📢 Join Channels:\n@https://t.me/+G9DiZ6NznoQ2Yzc1\n@channel2")
 
 # 📘 Help
 @bot.message_handler(commands=['help'])
@@ -136,4 +136,4 @@ def addkey(msg):
         bot.reply_to(msg, "❌ Format: /addkey 1 KEY123")
 
 print("🔥 Bot Running...")
-bot.infinity_polling()
+bot.infinity_polling() 
