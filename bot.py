@@ -187,7 +187,7 @@ def approve_order(call):
 💝 কেনাকাটার জন্য ধন্যবাদ!"""
     
     bot.send_message(uid, user_text, parse_mode="Markdown")
-    bot.send_message(ADMIN_ID, f"✅ অর্ডার অ্যাপ্রুভ করা হয়েছে!\n📦 বাকি স্টক: {product['stock']}")
+    bot.send_message(ADMIN_ID, f"✅ অর্ডার অ্যাপ্রুভ করা হয়েছে! বাকি স্টক: {product['stock']}")
     bot.answer_callback_query(call.id, "✅ অ্যাপ্রুভ করা হয়েছে!")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("reject_"))
@@ -198,4 +198,37 @@ def reject_order(call):
     
     uid = int(call.data.split("_")[1])
     bot.send_message(uid, "❌ **পেমেন্ট রিজেক্ট করা হয়েছে!**\nদয়া করে সঠিক তথ্য দিয়ে আবার চেষ্টা করুন।", parse_mode="Markdown")
-    bot.send_message(ADMIN_ID, f"❌
+    bot.send_message(ADMIN_ID, f"❌ ইউজার {uid} এর অর্ডার রিজেক্ট করা হয়েছে!")
+    bot.answer_callback_query(call.id, "❌ রিজেক্ট করা হয়েছে!")
+
+# ====================== কী চেক ======================
+@bot.callback_query_handler(func=lambda call: call.data == "check_key")
+def check_key(call):
+    bot.send_message(call.message.chat.id, "🔑 **আপনার কী লিখুন:**")
+    bot.register_next_step_handler(call.message, process_key_check)
+
+def process_key_check(message):
+    key = message.text.strip().upper()
+    found = False
+    for pid, product in products_db.items():
+        if key in product['keys']:
+            found = True
+            bot.reply_to(message, f"✅ **ভ্যালিড কী!**\n📦 {product['name']}\n💝 ইউজ করতে পারবেন।")
+            break
+    if not found:
+        bot.reply_to(message, "❌ **ইনভ্যালিড কী!** কীটি ভুল বা ইতিমধ্যে ইউজ করা হয়েছে।")
+
+# ====================== হোম ======================
+@bot.callback_query_handler(func=lambda call: call.data == "home")
+def home(call):
+    welcome = f"✨ হ্যালো {call.from_user.first_name}!\n\n📌 নিচের বাটন থেকে সিলেক্ট করুন"
+    bot.edit_message_caption(welcome, call.message.chat.id, call.message.message_id, reply_markup=main_menu(), parse_mode="Markdown")
+
+# ====================== রান ======================
+if __name__ == "__main__":
+    print("🔥 ANTO SHOP RUNNING...")
+    print(f"🤖 Bot: @{bot.get_me().username}")
+    print(f"👑 Admin ID: {ADMIN_ID}")
+    print(f"🖼️ Logo: {LOGO_URL}")
+    print("="*40)
+    bot.infinity_polling(timeout=60)
