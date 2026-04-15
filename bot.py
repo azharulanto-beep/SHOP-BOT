@@ -1,22 +1,8 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-import os
-import json
-import random
-import string
-import time
-import threading
+import os, json, random, time
 from datetime import datetime, timedelta
-from flask import Flask
 
-# ====================== FLASK APP FOR RENDER ======================
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "✅ ANTO SHOP BOT IS RUNNING!"
-
-# ====================== BOT CODE ======================
 TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 BKASH_NUMBER = "01918591988"
@@ -25,16 +11,16 @@ LOGO_URL = "https://i.postimg.cc/Cxk8NxV2/istockphoto-827351040-1024x1024.jpg"
 bot = telebot.TeleBot(TOKEN)
 
 # ====================== DATABASE ======================
-def load_db(filename):
+def load_db(f):
     try:
-        with open(filename, 'r') as f:
-            return json.load(f)
+        with open(f, 'r') as file:
+            return json.load(file)
     except:
         return {}
 
-def save_db(filename, data):
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
+def save_db(f, data):
+    with open(f, 'w') as file:
+        json.dump(data, file, indent=4)
 
 users_db = load_db('users.json')
 products_db = load_db('products.json')
@@ -43,18 +29,8 @@ wallet_db = load_db('wallet.json')
 # ====================== PRODUCTS ======================
 if not products_db:
     products_db = {
-        "1": {
-            "name": "🔥 DRIP CLINT",
-            "price": 400,
-            "keys": ["DRIP-001", "DRIP-002"],
-            "stock": 2
-        },
-        "2": {
-            "name": "🎮 BGMI ESP",
-            "price": 299,
-            "keys": ["BGMI-001"],
-            "stock": 1
-        }
+        "1": {"name": "🔥 DRIP CLINT", "price": 400, "keys": ["DRIP-001", "DRIP-002"], "stock": 2},
+        "2": {"name": "🎮 BGMI ESP", "price": 299, "keys": ["BGMI-001"], "stock": 1}
     }
     save_db('products.json', products_db)
 
@@ -129,7 +105,7 @@ def buy(c):
     
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
-        InlineKeyboardButton("💳 WALLET", callback_data="pay_wallet"),
+        InlineKeyboardButton("💳 PAY", callback_data="pay_wallet"),
         InlineKeyboardButton("❌ CANCEL", callback_data="home")
     )
     bot.edit_message_caption(f"💳 PAYMENT\n{p['name']} - ৳{p['price']}\n💰 Balance: ৳{bal}", 
@@ -169,24 +145,6 @@ def wallet(c):
     bot.edit_message_caption(f"💰 BALANCE: ৳{bal}", c.message.chat.id, c.message.message_id,
                             reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("🏠 HOME", callback_data="home")))
 
-# ====================== ORDERS ======================
-@bot.callback_query_handler(func=lambda c: c.data == "orders")
-def orders(c):
-    uid = str(c.message.chat.id)
-    user = users_db.get(uid, {})
-    orders_list = user.get('orders', [])
-    
-    if not orders_list:
-        text = "📭 No orders yet!"
-    else:
-        text = "📦 YOUR ORDERS:\n\n"
-        for o in orders_list[-5:]:
-            text += f"📦 {o['product']}\n💰 ৳{o['amount']}\n🔑 `{o['key']}`\n\n"
-    
-    bot.edit_message_caption(text, c.message.chat.id, c.message.message_id,
-                            reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("🏠 HOME", callback_data="home")),
-                            parse_mode="Markdown")
-
 # ====================== SPIN ======================
 spin_cd = {}
 
@@ -199,9 +157,7 @@ def spin(c):
             bot.answer_callback_query(c.id, "Come back tomorrow!")
             return
     
-    prizes = [5, 10, 20, 50, 0, 5, 10]
-    prize = random.choice(prizes)
-    
+    prize = random.choice([5, 10, 20, 50, 0, 5, 10])
     if prize > 0:
         add_balance(uid, prize)
         text = f"🎉 You won ৳{prize}!"
@@ -239,15 +195,6 @@ def addkey_cmd(m):
     except:
         bot.reply_to(m, "❌ /addkey PID|KEY")
 
-@bot.message_handler(commands=['products'])
-def products_cmd(m):
-    if m.chat.id != ADMIN_ID:
-        return
-    text = "📦 PRODUCTS:\n"
-    for pid, p in products_db.items():
-        text += f"{pid}. {p['name']} | Stock: {p['stock']}\n"
-    bot.reply_to(m, text)
-
 @bot.message_handler(commands=['addbalance'])
 def addbal_cmd(m):
     if m.chat.id != ADMIN_ID:
@@ -259,6 +206,15 @@ def addbal_cmd(m):
         bot.reply_to(m, f"✅ Added ৳{amt} to {uid}")
     except:
         bot.reply_to(m, "❌ /addbalance UID AMOUNT")
+
+@bot.message_handler(commands=['products'])
+def products_cmd(m):
+    if m.chat.id != ADMIN_ID:
+        return
+    text = "📦 PRODUCTS:\n"
+    for pid, p in products_db.items():
+        text += f"{pid}. {p['name']} | Stock: {p['stock']}\n"
+    bot.reply_to(m, text)
 
 @bot.message_handler(commands=['users'])
 def users_cmd(m):
@@ -276,26 +232,12 @@ def stats_cmd(m):
     bot.reply_to(m, f"Users: {len(users_db)}\nProducts: {len(products_db)}")
 
 # ====================== RUN ======================
-def run_bot():
-    print("🔥 Bot thread started!")
+if __name__ == "__main__":
+    print("🔥 ANTO SHOP BOT STARTED!")
+    print(f"Bot: @{bot.get_me().username}")
+    print(f"Admin: {ADMIN_ID}")
     while True:
         try:
             bot.infinity_polling(timeout=60)
-        except Exception as e:
-            print(f"Bot error: {e}")
+        except:
             time.sleep(5)
-
-if __name__ == "__main__":
-    print("="*50)
-    print("🔥 ANTO SHOP BOT STARTING...")
-    print(f"🤖 Bot Token: {'✅' if TOKEN else '❌'}")
-    print(f"👑 Admin ID: {ADMIN_ID}")
-    print("="*50)
-    
-    # Start bot in background thread
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-    
-    # Run Flask for Render health check
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
